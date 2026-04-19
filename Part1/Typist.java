@@ -216,4 +216,80 @@ public class Typist
         typistSymbol = newSymbol;
     }
 
-}
+
+    /**
+     * A main class used to test the functionality of the Typist class.
+     * @param args not used
+     */
+    public static void main(String[] args) {
+
+        Typist t = new Typist('W', "Muhammad", 0.5);
+
+        //test 1: progress cannot go below 0.
+        System.out.println ("TEST 1: slideBack() cannot go below zero");
+        t.resetToStart();
+        t.slideBack(5);
+        System.out.println("Progress (should be 0): " + t.getProgress());
+
+        //test 2: setting burnouts and state. 
+        System.out.println("TEST 2: burnout countdown and clearing");
+        t.resetToStart();
+        t.burnOut(3);
+        System.out.println("Burnout turns remaining: " + t.getBurnoutTurnsRemaining());
+        System.out.println("Is the typist burnt out? : " + t.isBurntOut());
+
+        //recovering from the three turns of burnout
+        t.recoverFromBurnout();
+        System.out.println("1 turn has passed: " + t.getBurnoutTurnsRemaining());
+
+        t.recoverFromBurnout();
+        System.out.println("2 turns have passed:  " + t.getBurnoutTurnsRemaining());
+
+        t.recoverFromBurnout();
+        System.out.println("3 turns have passed: " + t.getBurnoutTurnsRemaining());
+        System.out.println("Is burnt out?: " + t.isBurntOut());
+
+        //test 3: checking to see if reset works
+        System.out.println("TEST 3: resetToStart (clears progress and burnout)");
+        t.typeCharacter();
+        t.typeCharacter();
+        t.burnOut(2);
+
+        t.resetToStart();
+        System.out.println("Progress: " + t.getProgress());
+        System.out.println("Burnout turns: " + t.getBurnoutTurnsRemaining());
+        System.out.println("Is the typist burnt out?: " + t.isBurntOut());
+
+        //test 4: checking to see if the accuracy sets only between 0 and 1.
+        System.out.println("TEST 4: accuracy bounds (0.0 - 1.0) ");
+        //testing something too high
+        t.setAccuracy(1.5);
+        System.out.println("Accuracy ()>1) set: " + t.getAccuracy());
+
+        //testing something too low
+        t.setAccuracy(-0.5);
+        System.out.println("Accuracy (<0) set: " + t.getAccuracy());
+
+        //testing something valid
+        t.setAccuracy(0.75);
+        System.out.println("Valid accuracy: " + t.getAccuracy());
+
+        //test 5: ensuring progress works as intended
+        System.out.println("TEST 5: normal forward movement ");
+        t.resetToStart();
+        t.typeCharacter();
+        t.typeCharacter();
+        t.typeCharacter();
+        System.out.println("Progress after typing 3 times: " + t.getProgress());
+
+        //test 6: during burnout the typist should not be able to increase progress
+        System.out.println("TEST 6: typing does NOT work during burnout");
+        t.burnOut(2);
+        t.typeCharacter(); // should not increase
+        System.out.println("Progress during burnout: " + t.getProgress());
+    }
+
+} 
+
+
+

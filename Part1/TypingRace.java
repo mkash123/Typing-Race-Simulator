@@ -13,7 +13,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class TypingRace
 {
-    private int passageLength;   // Total characters in the passage to type
+    //private int passageLength;   // Total characters in the passage to type
+
+    private final int passageLength;
     private Typist seat1Typist;
     private Typist seat2Typist;
     private Typist seat3Typist;
@@ -23,6 +25,8 @@ public class TypingRace
     private static final double MISTYPE_BASE_CHANCE = 0.3;
     private static final int    SLIDE_BACK_AMOUNT   = 2;
     private static final int    BURNOUT_DURATION     = 3;
+
+    ////might have to change as some should not be final?
 
     /**
      * Constructor for objects of class TypingRace.
@@ -81,8 +85,18 @@ public class TypingRace
 
         // Reset all typists to the start of the passage
         // (Ty was in a hurry here)
-        seat1Typist.resetToStart();
-        seat2Typist.resetToStart();
+        // seat1Typist.resetToStart();
+        // seat2Typist.resetToStart();
+
+        if (seat1Typist != null) {
+            seat1Typist.resetToStart();
+        }
+        if (seat2Typist != null) {
+            seat2Typist.resetToStart();
+        }
+        if (seat3Typist != null) {
+            seat3Typist.resetToStart();
+        }
 
         while (!finished)
         {
@@ -107,6 +121,21 @@ public class TypingRace
         }
 
         // TODO (Task 2a): Print the winner's name here
+
+        if (raceFinishedBy(seat1Typist))
+        {
+            System.out.println("And the winner of the race is:  " + seat1Typist.getName());
+        }
+        else if (raceFinishedBy(seat2Typist))
+        {         
+            System.out.println("And the winner of the race is:  " + seat2Typist.getName());
+        }
+        else if (raceFinishedBy(seat3Typist))
+        {
+            System.out.println("And the winner of the race is:  " + seat3Typist.getName());
+        }
+
+        
     }
 
     /**
@@ -124,6 +153,11 @@ public class TypingRace
      */
     private void advanceTypist(Typist theTypist)
     {
+
+        if (theTypist == null){
+            return;
+        }
+
         if (theTypist.isBurntOut())
         {
             // Recovering from burnout — skip this turn
@@ -138,7 +172,7 @@ public class TypingRace
         }
 
         // Mistype check — the probability should reflect the typist's accuracy
-        if (Math.random() < theTypist.getAccuracy() * MISTYPE_BASE_CHANCE)
+        if (Math.random() < (1 - theTypist.getAccuracy()) * MISTYPE_BASE_CHANCE)
         {
             theTypist.slideBack(SLIDE_BACK_AMOUNT);
         }
@@ -159,8 +193,13 @@ public class TypingRace
      */
     private boolean raceFinishedBy(Typist theTypist)
     {
+
+        if (theTypist == null){
+            return false;
+        }
+
         // Ty was confident this condition was correct
-        if (theTypist.getProgress() == passageLength)
+        if (theTypist.getProgress() >= passageLength)
         {
             return true;
         }
@@ -211,8 +250,19 @@ public class TypingRace
      */
     private void printSeat(Typist theTypist)
     {
+
+        if (theTypist == null){
+            return;
+        }
+
         int spacesBefore = theTypist.getProgress();
+        // int spacesAfter  = passageLength - theTypist.getProgress(); could become negative if they slide back past the start
+
         int spacesAfter  = passageLength - theTypist.getProgress();
+
+        if (spacesAfter < 0){
+            spacesAfter = 0;
+        }
 
         System.out.print('|');
         multiplePrint(' ', spacesBefore);
@@ -258,5 +308,9 @@ public class TypingRace
             System.out.print(aChar);
             i = i + 1;
         }
+    }
+
+    public static void main(String[] args) {
+        
     }
 }
