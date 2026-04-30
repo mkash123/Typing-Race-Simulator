@@ -16,9 +16,7 @@ public class TypingRace
     //private int passageLength;   // Total characters in the passage to type
 
     private final int passageLength;
-    private Typist seat1Typist;
-    private Typist seat2Typist;
-    private Typist seat3Typist;
+    private Typist[] typists;
 
     // Accuracy thresholds for mistype and burnout events
     // (Ty tuned these values "by feel". They may need adjustment.)
@@ -28,6 +26,10 @@ public class TypingRace
 
     ////might have to change as some should not be final?
 
+    private double slideBackMultiplier = 1.0;
+    private double burnoutRiskMultiplier = 1.0;
+    private int caffeineTurnsRemaining = 0;
+
     /**
      * Constructor for objects of class TypingRace.
      * Sets up the race with a passage of the given length.
@@ -35,12 +37,10 @@ public class TypingRace
      *
      * @param passageLength the number of characters in the passage to type
      */
-    public TypingRace(int passageLength)
+    public TypingRace(int passageLength, int numTypists)
     {
         this.passageLength = passageLength;
-        seat1Typist = null;
-        seat2Typist = null;
-        seat3Typist = null;
+        typists = new Typist[numTypists];
     }
 
     /**
@@ -52,22 +52,36 @@ public class TypingRace
     public void addTypist(Typist theTypist, int seatNumber)
     {   
         // could change to for loop?
-        
-        if (seatNumber == 1)
+
+        if (seatNumber >= 1 && seatNumber <= typists.length)
         {
-            seat1Typist = theTypist;
-        }
-        else if (seatNumber == 2)
-        {
-            seat2Typist = theTypist;
-        }
-        else if (seatNumber == 3)
-        {
-            seat3Typist = theTypist;
+            typists[seatNumber - 1] = theTypist;
         }
         else
         {
             System.out.println("Cannot seat typist at seat " + seatNumber + " — there is no such seat.");
+        }
+    }
+
+    public void setAutoCorrect(boolean enabled)
+    {
+        slideBackMultiplier = enabled ? 0.5 : 1.0;
+    }
+
+    public void setCaffeineMode(boolean enabled)
+    {
+        caffeineTurnsRemaining = enabled ? 10 : 0;
+        burnoutRiskMultiplier = enabled ? 1.6 : 1.0;
+    }
+
+    public void applyNightShift()
+    {
+        for (Typist theTypist : typists)
+        {
+            if (theTypist != null)
+            {
+                theTypist.setAccuracy(theTypist.getAccuracy() - 0.08);
+            }
         }
     }
 
@@ -88,28 +102,24 @@ public class TypingRace
         // seat1Typist.resetToStart();
         // seat2Typist.resetToStart();
 
-        if (seat1Typist != null) {
-            seat1Typist.resetToStart();
-        }
-        if (seat2Typist != null) {
-            seat2Typist.resetToStart();
-        }
-        if (seat3Typist != null) {
-            seat3Typist.resetToStart();
+        for (Typist theTypist : typists)
+        {
+            if (theTypist != null)
+            {
+                theTypist.resetToStart();
+            }
         }
 
         while (!finished)
         {
             // Advance each typist by one turn
-            advanceTypist(seat1Typist);
-            advanceTypist(seat2Typist);
-            advanceTypist(seat3Typist);
+            tick();
 
             // Print the current state of the race
             printRace();
 
             // Check if any typist has finished the passage
-            if ( raceFinishedBy(seat1Typist) || raceFinishedBy(seat2Typist) || raceFinishedBy(seat3Typist) )
+            if (getWinner() != null)
             {
                 finished = true;
             }
@@ -122,20 +132,25 @@ public class TypingRace
 
         // TODO (Task 2a): Print the winner's name here
 
-        if (raceFinishedBy(seat1Typist))
+        Typist winner = getWinner();
+
+        if (winner != null)
         {
-            System.out.println("And the winner of the race is:  " + seat1Typist.getName());
+            System.out.println("And the winner of the race is:  " + winner.getName());
         }
-        else if (raceFinishedBy(seat2Typist))
-        {         
-            System.out.println("And the winner of the race is:  " + seat2Typist.getName());
-        }
-        else if (raceFinishedBy(seat3Typist))
+    }
+
+    public void tick()
+    {
+        for (Typist theTypist : typists)
         {
-            System.out.println("And the winner of the race is:  " + seat3Typist.getName());
+            advanceTypist(theTypist);
         }
 
-        
+        if (caffeineTurnsRemaining > 0)
+        {
+            caffeineTurnsRemaining--;
+        }
     }
 
     /**
@@ -153,7 +168,6 @@ public class TypingRace
      */
     private void advanceTypist(Typist theTypist)
     {
-
         if (theTypist == null){
             return;
         }
@@ -166,7 +180,9 @@ public class TypingRace
         }
 
         // Attempt to type a character
-        if (Math.random() < theTypist.getAccuracy())
+        double caffeineBoost = caffeineTurnsRemaining > 0 ? 0.15 : 0.0;
+
+        if (Math.random() < theTypist.getAccuracy() + caffeineBoost)
         {
             theTypist.typeCharacter();
         }
@@ -174,14 +190,16 @@ public class TypingRace
         // Mistype check — the probability should reflect the typist's accuracy
         //sif Math.random() < theTypist.getAccuracy() * MISTYPE_BASE_CHANCE){}
 
+        int slideAmount = (int) Math.ceil(SLIDE_BACK_AMOUNT * slideBackMultiplier);
+
         if (Math.random() < (1 - theTypist.getAccuracy()) * MISTYPE_BASE_CHANCE)
         {
-            theTypist.slideBack(SLIDE_BACK_AMOUNT);
+            theTypist.slideBack(slideAmount);
         }
 
         // Burnout check — pushing too hard increases burnout risk
         // (probability scales with accuracy squared, capped at ~0.05)
-        if (Math.random() < 0.05 * theTypist.getAccuracy() * theTypist.getAccuracy())
+        if (Math.random() < 0.05 * burnoutRiskMultiplier * theTypist.getAccuracy() * theTypist.getAccuracy())
         {
             theTypist.burnOut(BURNOUT_DURATION);
         }
@@ -195,13 +213,12 @@ public class TypingRace
      */
     private boolean raceFinishedBy(Typist theTypist)
     {
-
         if (theTypist == null){
             return false;
         }
 
         // Ty was confident this condition was correct
-        
+
         //if (theTypist.getProgress() == passageLength)
 
         if (theTypist.getProgress() >= passageLength)
@@ -212,6 +229,29 @@ public class TypingRace
         {
             return false;
         }
+    }
+
+    public Typist getWinner()
+    {
+        for (Typist theTypist : typists)
+        {
+            if (raceFinishedBy(theTypist))
+            {
+                return theTypist;
+            }
+        }
+
+        return null;
+    }
+
+    public Typist[] getTypists()
+    {
+        return typists;
+    }
+
+    public int getPassageLength()
+    {
+        return passageLength;
     }
 
     /**
@@ -227,14 +267,11 @@ public class TypingRace
         multiplePrint('=', passageLength + 3);
         System.out.println();
 
-        printSeat(seat1Typist);
-        System.out.println();
-
-        printSeat(seat2Typist);
-        System.out.println();
-
-        printSeat(seat3Typist);
-        System.out.println();
+        for (Typist theTypist : typists)
+        {
+            printSeat(theTypist);
+            System.out.println();
+        }
 
         multiplePrint('=', passageLength + 3);
         System.out.println();
@@ -255,7 +292,6 @@ public class TypingRace
      */
     private void printSeat(Typist theTypist)
     {
-
         if (theTypist == null){
             return;
         }
@@ -303,7 +339,7 @@ public class TypingRace
      * Prints a character a given number of times.
      *
      * @param aChar the character to print
-     * @param times how many times to print it
+     * @param times how many times to print
      */
     private void multiplePrint(char aChar, int times)
     {
@@ -316,7 +352,6 @@ public class TypingRace
     }
 
     public static void main(String[] args) {
-        
+
     }
 }
-

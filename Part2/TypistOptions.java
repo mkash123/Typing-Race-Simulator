@@ -1,82 +1,156 @@
+import java.awt.GridLayout;
 import javax.swing.*;
-/**
- * The page where all the typist settings are done
- * On this page, the typist can select their colour, sybmol and other keyboard settings
- * @author Muhammad Khan
- */
 
-public class TypistOptions extends JPanel{
-    @SuppressWarnings("unused")
-    TypingRaceWindow parent;
+public class TypistOptions extends JPanel {
 
-    
-    @SuppressWarnings("OverridableMethodCallInConstructor")
-    public TypistOptions(TypingRaceWindow parent){
+    private TypingRaceWindow parent;
+
+    public TypistOptions(TypingRaceWindow parent) {
         this.parent = parent;
         createTypistPanel();
     }
 
-    public void createTypistPanel(){
-            JLabel typistOptionsLabel = new JLabel("Choose the options for the typist below");
+    public void createTypistPanel() {
+        setLayout(new GridLayout(14, 1, 10, 10));
 
-            //only 6 colours and 6 symbols needed as that is max number of typists
+        //labels and combo boxes for the typist options
+        JLabel title = new JLabel("Typist Setup", JLabel.CENTER);
+        title.setToolTipText("How many typists you want in your race");
 
-            //could be improved later with a proper colour picker?
-            JLabel chooseColour = new JLabel("Choose the typists colour");
-            String[] colours = {"Red", "Blue", "Orange", "Green", "Purple", "Yellow"};
-            JComboBox<String> colourBox = new JComboBox<>(colours);
-        
-            JLabel keyboardSelection = new JLabel("Choose the keyboard type");
-            String[] keyboardOptions = {"Membrane", "Mechanical", "Touchscreen"};
-            JComboBox<String> typistBox = new JComboBox<>(keyboardOptions);
+        JTextField nameField = new JTextField();
+        nameField.setBorder(BorderFactory.createTitledBorder("Enter Name"));
 
-            JLabel chooseSymbol = new JLabel("Choose a symbol");
-            String[] symbolsOptions = {"☀", "★", "♠", "♫", "☂", "⚡"};
-            JComboBox<String> symbolBox = new JComboBox<>(symbolsOptions);
-            
-            
-            JLabel typistStyle = new JLabel("Choose typist style");
-            String[] typistStyleOptions = {"Touch Typist","Hunt and Peck","Phone Thumbs","Voice-To-Text"};
-            JComboBox<String> typistStyleBox = new JComboBox<>(typistStyleOptions);
+        JLabel colourLabel = new JLabel("Colour");
+        colourLabel.setToolTipText("Sets the colour for a typist");
 
-            JLabel typistAccesories = new JLabel("Choose typists accesories");
-            String[] accesoriesOptions = {"Wrist support", "Energy drink", "Noise cancelling headphones"};
-            JComboBox<String> accesoriesBox = new JComboBox<>(accesoriesOptions);
+        String[] colours = {"Red", "Blue", "Orange", "Green", "Purple", "Yellow"};
+        JComboBox<String> colourBox = new JComboBox<>(colours);
 
-            JButton submitButtonOptions = new JButton("Submit and move onto the race");
+        JLabel symbolLabel = new JLabel("Symbol");
+        symbolLabel.setToolTipText("A symbol used to represent the typist");
 
-            submitButtonOptions.addActionListener(e -> {
-                String selectedColour = (String) colourBox.getSelectedItem();
-                String typistKeyboardSelected = (String) typistBox.getSelectedItem();
-                String selectedSymbol = (String) symbolBox.getSelectedItem();
-                String typistStyleSelected = (String) typistStyleBox.getSelectedItem();
-                String acceoriesSelected = (String) accesoriesBox.getSelectedItem();
+        String[] symbolsOptions = {"☀", "★", "♠", "♫", "☂", "⚡"};
+        JComboBox<String> symbolBox = new JComboBox<>(symbolsOptions);
+        symbolBox.setToolTipText("Symbol appears on screen during the race");
 
-                parent.setTypistOptions(selectedColour, typistKeyboardSelected, selectedSymbol, typistStyleSelected, acceoriesSelected);
-            });
+        JLabel keyboardLabel = new JLabel("Keyboard");
+        keyboardLabel.setToolTipText("Keyboard type affects accuracy and typing performance");
 
-            //add setToolTipText to the options pages to highlight what each thing does, have a label at the top that explains this
+        String[] keyboardOptions = {"Membrane", "Mechanical", "Touchscreen", "Stenography"};
+        JComboBox<String> keyboardBox = new JComboBox<>(keyboardOptions);
+        keyboardBox.setToolTipText("Mechanical improves accuracy, Touchscreen lowers it, Stenography gives a larger boost");
 
-            add(typistOptionsLabel);
+        JLabel styleLabel = new JLabel("Typing Style");
+        styleLabel.setToolTipText("Typing style controls the typist's base accuracy");
 
-            add(chooseColour);
-            add(colourBox);
+        String[] typistStyleOptions = {"Touch Typist", "Hunt and Peck", "Phone Thumbs", "Voice-To-Text"};
+        JComboBox<String> styleBox = new JComboBox<>(typistStyleOptions);
+        styleBox.setToolTipText("Touch Typist is reliable, Hunt and Peck is slower, Voice-To-Text is highly accurate");
 
-            add(chooseSymbol);
-            add(symbolBox);
+        JLabel accessoriesLabel = new JLabel("Accessories");
+        accessoriesLabel.setToolTipText("Accessories provide small performance effects");
 
-            add(keyboardSelection);
-            add(typistBox);
+        String[] accessoriesOptions = {"None", "Wrist Support", "Energy Drink", "Noise-Cancelling Headphones"};
+        JComboBox<String> accessoriesBox = new JComboBox<>(accessoriesOptions);
+        accessoriesBox.setToolTipText("Wrist Support reduces burnout, Energy Drink boosts accuracy slightly, Headphones reduce mistakes");
 
-            add(typistStyle);
-            add(typistStyleBox);
+        JButton submit = new JButton("Start Race");
+        submit.setToolTipText("Create your typist and start the race.");
 
-            add(typistAccesories);
-            add(accesoriesBox);
+        //button to store values and move to the actual race
+        submit.addActionListener(e -> {
+            String name = nameField.getText().trim();
 
-            add(submitButtonOptions);
+            if (name.isEmpty()) {
+                name = "Player";
+            }
 
+            char symbol = symbolBox.getSelectedItem().toString().charAt(0);
+            String style = (String) styleBox.getSelectedItem();
+            String keyboard = (String) keyboardBox.getSelectedItem();
+            String accessory = (String) accessoriesBox.getSelectedItem();
+
+            double accuracy = getAccuracyFromStyle(style);
+            accuracy = applyKeyboardEffect(accuracy, keyboard);
+            accuracy = applyAccessoryEffect(accuracy, accessory);
+
+            Typist player = new Typist(symbol, name, accuracy);
+
+            parent.setTypistOptions(
+                    player,
+                    (String) colourBox.getSelectedItem(),
+                    keyboard,
+                    style,
+                    accessory
+            );
+        });
+
+        add(title);
+        add(nameField);
+        add(colourLabel);
+        add(colourBox);
+        add(symbolLabel);
+        add(symbolBox);
+        add(keyboardLabel);
+        add(keyboardBox);
+        add(styleLabel);
+        add(styleBox);
+        add(accessoriesLabel);
+        add(accessoriesBox);
+        add(submit);
+    }
+
+    //method to apply the accuracy from chosen style
+    private double getAccuracyFromStyle(String style) {
+        switch (style) {
+            case "Touch Typist":
+                return 0.88;
+            case "Hunt and Peck":
+                return 0.58;
+            case "Phone Thumbs":
+                return 0.68;
+            case "Voice-To-Text":
+                return 0.92;
+            default:
+                return 0.70;
+        }
+    }
+
+
+    //method to apply the keyboard effects
+    private double applyKeyboardEffect(double accuracy, String keyboard) {
+        if ("Mechanical".equals(keyboard)) {
+            accuracy = accuracy + 0.04;
+        } else if ("Touchscreen".equals(keyboard)) {
+            accuracy = accuracy - 0.05;
+        } else if ("Stenography".equals(keyboard)) {
+            accuracy = accuracy + 0.08;
+        }
+
+        return limitAccuracy(accuracy);
+    }
+
+    //method to apply the accesories affects
+    private double applyAccessoryEffect(double accuracy, String accessory) {
+        if ("Energy Drink".equals(accessory)) {
+            accuracy = accuracy + 0.03;
+        } else if ("Noise-Cancelling Headphones".equals(accessory)) {
+            accuracy = accuracy + 0.05;
+        }
+
+        return limitAccuracy(accuracy);
+    }
+
+    //method to ensure the accuracy can not go below 0 or above 1
+    private double limitAccuracy(double accuracy) {
+        if (accuracy < 0.0) {
+            return 0.0;
+        }
+
+        if (accuracy > 1.0) {
+            return 1.0;
+        }
+
+        return accuracy;
     }
 }
-
-
