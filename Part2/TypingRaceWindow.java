@@ -161,7 +161,11 @@ public class TypingRaceWindow {
         return autoCorrectOn;
     }
 
-    public static void main(String[] args) {
+    public static void startRaceGUI(){
         SwingUtilities.invokeLater(() -> new TypingRaceWindow());
+    }
+
+    public static void main(String[] args) {
+        startRaceGUI();
     }
 }
